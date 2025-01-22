@@ -1,25 +1,15 @@
-<p align="center" width="80%">
-<img src="https://i.postimg.cc/g0QRgMVv/WX20240228-113337-2x.png"  width="100%" height="70%">
-</p>
+# 	<img src="./assets/pyramid-chart.png" alt="Video-MMMU Icon" style="height: 5.5rem; width: auto;"> Video-MMMU: Evaluating Knowledge Acquisition from Multi-Discipline Professional Videos
 
-# The Evaluation Suite of Large Multimodal Models 
-
-[![PyPI](https://img.shields.io/pypi/v/lmms-eval)](https://pypi.org/project/lmms-eval)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/lmms-eval)
-![GitHub contributors](https://img.shields.io/github/contributors/EvolvingLMMs-Lab/lmms-eval)
-[![issue resolution](https://img.shields.io/github/issues-closed-raw/EvolvingLMMs-Lab/lmms-eval)](https://github.com/EvolvingLMMs-Lab/lmms-eval/issues)
-[![open issues](https://img.shields.io/github/issues-raw/EvolvingLMMs-Lab/lmms-eval)](https://github.com/EvolvingLMMs-Lab/lmms-eval/issues)
-
-> Accelerating the development of large multimodal models (LMMs) with `lmms-eval`
 
 🏠 [LMMs-Lab Homepage](https://lmms-lab.framer.ai) | 🤗 [Huggingface Datasets](https://huggingface.co/lmms-lab) | <a href="https://emoji.gg/emoji/1684-discord-thread"><img src="https://cdn3.emoji.gg/emojis/1684-discord-thread.png" width="14px" height="14px" alt="Discord_Thread"></a> [discord/lmms-eval](https://discord.gg/zdkwKUqrPy)
-
-📖 [Supported Tasks (90+)](https://github.com/EvolvingLMMs-Lab/lmms-eval/blob/main/docs/current_tasks.md) | 🌟 [Supported Models (30+)](https://github.com/EvolvingLMMs-Lab/lmms-eval/tree/main/lmms_eval/models) | 📚 [Documentation](docs/README.md)
 
 ---
 
 ## Annoucement
 - [2025-1] 🎉🎉 We introduce [VideoMMMU](https://videommmu.github.io/), a massive, multi-modal, multi-disciplinary video benchmark that evaluates the knowledge acquisition capability from educational videos.
+
+## Evaluation
+The evaluation of VideoMMMU is integrated into [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval/tree/main). Below is a detailed instruction of the evaluation.
 
 ## Installation
 
@@ -42,7 +32,7 @@ cd LLaVA-NeXT
 pip install -e .
 ```
 
-## Evaluation
+## Command
 
 **Evaluation of LLaVA-OneVision on VideoMMMU**
 
