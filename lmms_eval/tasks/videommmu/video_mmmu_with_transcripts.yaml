@@ -1,0 +1,5 @@
+group: video_mmmu_with_transcript
+task:
+- video_mmmu_adaptation_with_transcript
+- video_mmmu_comprehension_with_transcript
+- video_mmmu_perception_with_transcript
