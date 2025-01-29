@@ -60,6 +60,7 @@ output_text = processor.batch_decode(
 )
 print(output_text)
 
+print("first done")
 
 
 
@@ -76,26 +77,6 @@ print(output_text)
 
 
 
-
-
-# Messages containing a images list as a video and a text query
-messages = [
-    {
-        "role": "user",
-        "content": [
-            {
-                "type": "video",
-                "video": [
-                    "file:///path/to/frame1.jpg",
-                    "file:///path/to/frame2.jpg",
-                    "file:///path/to/frame3.jpg",
-                    "file:///path/to/frame4.jpg",
-                ],
-            },
-            {"type": "text", "text": "Describe this video."},
-        ],
-    }
-]
 
 # Messages containing a local video path and a text query
 messages = [
@@ -104,23 +85,9 @@ messages = [
         "content": [
             {
                 "type": "video",
-                "video": "file:///path/to/video1.mp4",
+                "video": "/mnt/sfs-common/krhu/.cache/huggingface/video_mmmu/question_only/dev_Biology_3_image.mp4",
                 "max_pixels": 360 * 420,
                 "fps": 1.0,
-            },
-            {"type": "text", "text": "Describe this video."},
-        ],
-    }
-]
-
-# Messages containing a video url and a text query
-messages = [
-    {
-        "role": "user",
-        "content": [
-            {
-                "type": "video",
-                "video": "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen2-VL/space_woaudio.mp4",
             },
             {"type": "text", "text": "Describe this video."},
         ],

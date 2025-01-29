@@ -1,5 +1,8 @@
 import base64
+import json
+import os
 from io import BytesIO
+from re import I
 from typing import List, Optional, Tuple, Union
 
 import decord
@@ -9,7 +12,7 @@ from accelerate import Accelerator, DistributedType
 from loguru import logger as eval_logger
 from PIL import Image
 from tqdm import tqdm
-from transformers import AutoProcessor, AutoTokenizer, Qwen2VLForConditionalGeneration
+from transformers import AutoProcessor, AutoTokenizer, Qwen2_5_VLForConditionalGeneration
 
 from lmms_eval import utils
 from lmms_eval.api.instance import Instance
@@ -23,27 +26,29 @@ except ImportError:
     eval_logger.warning("Failed to import qwen_vl_utils; Please install it via `pip install qwen-vl-utils`")
 
 
-@register_model("qwen2_vl")
-class Qwen2_VL(lmms):
+@register_model("qwen2_5_vl_interleave")
+class Qwen2_5_VL_Interleave(lmms):
     """
-    Qwen2_VL Model
-    "https://github.com/QwenLM/Qwen2-VL"
+    Qwen2.5_VL Model
+    "https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct"
     """
 
     def __init__(
         self,
-        pretrained: str = "Qwen/Qwen2-VL-2B-Instruct",
+        pretrained: str = "Qwen/Qwen2.5-VL-7B-Instruct",
         device: Optional[str] = "cuda",
-        device_map: Optional[str] = "cuda",
+        device_map: Optional[str] = "auto",
         batch_size: Optional[Union[int, str]] = 1,
         use_cache=True,
         use_flash_attention_2: Optional[bool] = True,
-        max_pixels: int = 12845056,
+        max_pixels: int = 1605632,
         min_pixels: int = 3136,
-        max_num_frames: int = 256,
-        use_custom_video_loader: Optional[bool] = False,
+        max_num_frames: int = 20,
+        use_custom_video_loader: Optional[bool] = True,
         fps: Optional[float] = None,  # Only applicable if use_custom_video_loader is True
-        max_image_size: Optional[int] = None,  # Only applicable if use_custom_video_loader is True
+        max_image_size: Optional[int] = 1024,  # Only applicable if use_custom_video_loader is True
+        continual_mode: bool = True,
+        response_persistent_folder: str = "./logs/persistent/qwen",  # We will cache the Gemini API response in this path and use it for future requests
         **kwargs,
     ) -> None:
         super().__init__()
@@ -75,22 +80,18 @@ class Qwen2_VL(lmms):
             self.device_map = f"cuda:{accelerator.local_process_index}"
 
         if use_flash_attention_2:
-            self._model = Qwen2VLForConditionalGeneration.from_pretrained(
+            self._model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
                 pretrained,
                 torch_dtype="auto",
                 device_map=self.device_map,
                 attn_implementation="flash_attention_2",
             ).eval()
         else:
-            self._model = Qwen2VLForConditionalGeneration.from_pretrained(pretrained, torch_dtype="auto", device_map=self.device_map).eval()
-        self.processor = AutoProcessor.from_pretrained(pretrained, max_pixels=max_pixels, min_pixels=min_pixels)
+            self._model = Qwen2_5_VLForConditionalGeneration.from_pretrained(pretrained, torch_dtype="auto", device_map=self.device_map).eval()
         self.max_pixels = max_pixels
         self.min_pixels = min_pixels
         self.max_num_frames = max_num_frames
         self.processor = AutoProcessor.from_pretrained(pretrained, max_pixels=max_pixels, min_pixels=min_pixels)
-        self.max_pixels = max_pixels
-        self.min_pixels = min_pixels
-        self.max_num_frames = max_num_frames
         self._tokenizer = AutoTokenizer.from_pretrained(pretrained)
 
         self._config = self.model.config
@@ -114,6 +115,24 @@ class Qwen2_VL(lmms):
         else:
             self._rank = 0
             self._word_size = 1
+
+        self.continual_mode = continual_mode
+        if self.continual_mode and response_persistent_folder is None:
+            raise ValueError("Continual mode requires a persistent path for the response. We will cache the Gemini API response in this path and use it for future requests. Please provide a valid path.")
+        if self.continual_mode:
+            self.response_persistent_folder = response_persistent_folder
+            if not os.path.exists(self.response_persistent_folder):
+                os.makedirs(self.response_persistent_folder)
+            self.model_version = pretrained.split("/")[-1].replace("-", "_").lower()
+            self.response_persistent_file = os.path.join(self.response_persistent_folder, f"{self.model_version}_response.json")
+
+            if os.path.exists(self.response_persistent_file):
+                with open(self.response_persistent_file, "r") as f:
+                    self.response_cache = json.load(f)
+                self.cache_mode = "resume"
+            else:
+                self.response_cache = {}
+                self.cache_mode = "start"
 
     @property
     def config(self):
@@ -157,7 +176,7 @@ class Qwen2_VL(lmms):
         return self._world_size
 
     def loglikelihood(self, requests: List[Instance]) -> List[Tuple[float, bool]]:
-        raise NotImplementedError("Loglikelihood is not implemented for Qwen2_VL")
+        raise NotImplementedError("Loglikelihood is not implemented for Qwen2.5_VL")
 
     def flatten(self, input):
         new_list = []
@@ -168,6 +187,9 @@ class Qwen2_VL(lmms):
 
     def generate_until(self, requests: List[Instance]) -> List[str]:
         res = []
+
+        def get_uuid(task, split, doc_id):
+            return f"{task}___{split}___{doc_id}"
 
         def _collate(x):
             # the negative sign on len(toks) sorts descending - this has a few advantages:
@@ -187,10 +209,19 @@ class Qwen2_VL(lmms):
         chunks = re_ords.get_batched(n=self.batch_size, batch_fn=None)
         for chunk in chunks:
             contexts, all_gen_kwargs, doc_to_visual, doc_id, task, split = zip(*chunk)
+
             task = task[0]
             split = split[0]
-            visuals = [doc_to_visual[0](self.task_dict[task][split][ids]) for ids in doc_id]
-            visuals = self.flatten(visuals)
+            if self.continual_mode and self.cache_mode == "resume":
+                doc_uuid = get_uuid(task, split, doc_id)
+                # print(doc_uuid)
+                if doc_uuid in self.response_cache:
+                    content = self.response_cache[doc_uuid]
+                    if content:
+                        res.extend(content)
+                        pbar.update(1)
+                        continue
+            visuals = [doc_to_visual[i](self.task_dict[task][split][ids]) for i, ids in enumerate(doc_id)]
 
             gen_kwargs = all_gen_kwargs[0]
 
@@ -208,25 +239,68 @@ class Qwen2_VL(lmms):
             if isinstance(contexts, tuple):
                 contexts = list(contexts)
 
-            for i in range(len(contexts)):
-                if "<image>" in contexts[i]:
-                    contexts[i] = contexts[i].replace("<image>", "")
+            # for i in range(len(contexts)):
+            #     for j in range(32):
+            #         if f"<image {j}>" in contexts[i]:
+            #             contexts[i] = contexts[i].replace(f"<image {j}>", "<image>")
+            #         if f"\\<image {j}\\>" in contexts[i]:
+            #             contexts[i] = contexts[i].replace(f"\\<image {j}\\>", "<image>")
+            # if "<image>" in contexts[i]:
+            #     contexts[i] = contexts[i].replace("<image>", "")
+            # print(contexts[i])
 
             messages = []
             processed_visuals = []
             for i, context in enumerate(contexts):
+                context += "\nPlease think step by step."
+
+                # print("context", context)
+
                 if "<image>" in context:
-                    context = context.replace("<image>", "")
+                    context = context.split("<image>")
+                    # print(json.dumps(context, indent=4))
+                else:
+                    context = [context]
 
                 message = [{"role": "system", "content": "You are a helpful assistant."}]
 
                 if len(visuals) > 0:
                     visual = visuals[i] if i < len(visuals) else None
+                    # print("visuals", visual)
+                    if isinstance(visual, Image.Image):
+                        visual = [visual]
+                    if isinstance(visual, (list, tuple)) and isinstance(visual[0], str):
+                        assert len(visual) == 1, f"Expected a single video file but got {len(visual)} files"
+                        visual = visual[0]
                     if isinstance(visual, str) and visual.endswith((".mp4", ".avi", ".mov")):  # Video file
                         if self.use_custom_video_loader:
-                            visual = read_video_pyav_base64(visual, num_frm=self.max_num_frames, fps=self.fps, img_format="JPEG", max_image_size=self.max_image_size)
+                            try:
+                                visual = read_video_pyav_base64(
+                                    visual,
+                                    num_frm=self.max_num_frames,
+                                    fps=self.fps,
+                                    img_format="JPEG",
+                                    max_image_size=self.max_image_size,
+                                )
+                            except Exception as e:
+                                eval_logger.error(f"Failed to load video: {visual}. Error: {e}")
+                                continue
+
                             image_contents = list(map(lambda x: f"data:image/jpeg;base64,{x}", visual))
-                            message.append({"role": "user", "content": [{"type": "video", "video": image_contents}, {"type": "text", "text": context}]})
+                            if len(context) == 2:
+                                if len(image_contents) == 1:
+                                    message.append(
+                                        {
+                                            "role": "user",
+                                            "content": [{"type": "video", "video": image_contents[:-1]}, {"type": "text", "text": context[0]}, {"type": "image", "image": image_contents[-1]}, {"type": "text", "text": context[1]}],
+                                        }
+                                    )
+                                else:
+                                    message.append({"role": "user", "content": [{"type": "text", "text": context[0]}, {"type": "image", "image": image_contents[-1]}, {"type": "text", "text": context[1]}]})
+                            else:
+                                message.append({"role": "user", "content": [{"type": "video", "video": image_contents}, {"type": "text", "text": context}]})
+                            # with open("alb.json", "w") as f:
+                            #     json.dump(message, f, indent=4)
                         else:
                             vr = decord.VideoReader(visual)
                             first_frame = vr[0].asnumpy()
@@ -242,6 +316,7 @@ class Qwen2_VL(lmms):
                         message.append({"role": "user", "content": [{"type": "image", "image": f"data:image/jpeg;base64,{base64_string}"}, {"type": "text", "text": context}]})
                     elif isinstance(visual, (list, tuple)) and all(isinstance(v, Image.Image) for v in visual):  # Multiple images
                         image_content = []
+                        i = 0
                         for v in visual:
                             base64_image = v.convert("RGB")
                             buffer = BytesIO()
@@ -249,7 +324,16 @@ class Qwen2_VL(lmms):
                             base64_bytes = base64.b64encode(buffer.getvalue())
                             base64_string = base64_bytes.decode("utf-8")
                             image_content.append({"type": "image", "image": f"data:image/jpeg;base64,{base64_string}"})
-                        message.append({"role": "user", "content": image_content + [{"type": "text", "text": context}]})
+                            v.save(f"test_{i}.jpg")
+                            i += 1
+                        # message.append({"role": "user", "content": image_content + [{"type": "text", "text": context}]})
+                        assert len(image_content) + 1 == len(context), f"Number of images and context do not match, {len(image_content)} images and {len(context)} context\n{json.dumps(context)}"
+                        content = []
+                        for i in range(len(image_content)):
+                            content.append({"type": "text", "text": context[i]})
+                            content.append(image_content[i])
+                        content.append({"type": "text", "text": context[-1]})
+                        # print("content", content)
                     else:
                         message.append({"role": "user", "content": [{"type": "text", "text": context}]})
                 else:
@@ -258,9 +342,16 @@ class Qwen2_VL(lmms):
                 messages.append(message)
 
             texts = [self.processor.apply_chat_template(msg, tokenize=False, add_generation_prompt=True) for msg in messages]
-            image_inputs, video_inputs = process_vision_info(messages)
+            image_inputs, video_inputs, video_kwargs = process_vision_info(messages, return_video_kwargs=True)
 
-            inputs = self.processor(text=texts, images=image_inputs, videos=video_inputs, padding=True, return_tensors="pt")
+            inputs = self.processor(
+                text=texts,
+                images=image_inputs,
+                videos=video_inputs,
+                padding=True,
+                return_tensors="pt",
+                **video_kwargs,
+            )
 
             if self.device_map == "auto":
                 inputs = inputs.to("cuda")
@@ -293,16 +384,22 @@ class Qwen2_VL(lmms):
             generated_ids_trimmed = [out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, cont)]
             answers = self.processor.batch_decode(generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)
             for i, ans in enumerate(answers):
-                for term in until:
-                    if len(term) > 0:
-                        ans = ans.split(term)[0]
                 answers[i] = ans
 
+            content = []
             for ans, context in zip(answers, contexts):
                 res.append(ans)
+                content.append(ans)
                 self.cache_hook.add_partial("generate_until", (context, gen_kwargs), ans)
                 pbar.update(1)
             # reorder this group of results back to original unsorted form
+
+            if self.continual_mode is True:  # Cache the response
+                doc_uuid = get_uuid(task, split, doc_id)
+                self.response_cache[doc_uuid] = content
+                with open(self.response_persistent_file, "w") as f:
+                    json.dump(self.response_cache, f)
+
         res = re_ords.get_original(res)
 
         pbar.close()

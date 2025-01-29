@@ -9,7 +9,7 @@ from accelerate import Accelerator, DistributedType
 from loguru import logger as eval_logger
 from PIL import Image
 from tqdm import tqdm
-from transformers import AutoProcessor, AutoTokenizer, Qwen2VLForConditionalGeneration
+from transformers import AutoProcessor, AutoTokenizer, Qwen2_5_VLForConditionalGeneration
 
 from lmms_eval import utils
 from lmms_eval.api.instance import Instance
@@ -23,23 +23,23 @@ except ImportError:
     eval_logger.warning("Failed to import qwen_vl_utils; Please install it via `pip install qwen-vl-utils`")
 
 
-@register_model("qwen2_vl")
-class Qwen2_VL(lmms):
+@register_model("qwen2_5_vl")
+class Qwen2_5_VL(lmms):
     """
-    Qwen2_VL Model
-    "https://github.com/QwenLM/Qwen2-VL"
+    Qwen2.5_VL Model
+    "https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct"
     """
 
     def __init__(
         self,
-        pretrained: str = "Qwen/Qwen2-VL-2B-Instruct",
+        pretrained: str = "Qwen/Qwen2.5-VL-3B-Instruct",
         device: Optional[str] = "cuda",
-        device_map: Optional[str] = "cuda",
+        device_map: Optional[str] = "auto",
         batch_size: Optional[Union[int, str]] = 1,
         use_cache=True,
         use_flash_attention_2: Optional[bool] = True,
-        max_pixels: int = 12845056,
-        min_pixels: int = 3136,
+        min_pixels: int = 256 * 28 * 28,
+        max_pixels: int = 1280 * 28 * 28,
         max_num_frames: int = 256,
         use_custom_video_loader: Optional[bool] = False,
         fps: Optional[float] = None,  # Only applicable if use_custom_video_loader is True
@@ -52,16 +52,11 @@ class Qwen2_VL(lmms):
 
         self.use_custom_video_loader = use_custom_video_loader
         self.fps = fps
-        if self.fps and not self.use_custom_video_loader:
-            raise ValueError("FPS is only applicable if use_custom_video_loader is True")
+        # if self.fps and not self.use_custom_video_loader:
+        #     raise ValueError("FPS is only applicable if use_custom_video_loader is True")
         self.max_image_size = max_image_size
         if self.max_image_size and not self.use_custom_video_loader:
             raise ValueError("max_image_size is only applicable if use_custom_video_loader is True")
-
-        self.use_custom_video_loader = use_custom_video_loader
-        self.fps = fps
-        if self.fps and not self.use_custom_video_loader:
-            raise ValueError("FPS is only applicable if use_custom_video_loader is True")
 
         accelerator = Accelerator()
         if accelerator.num_processes > 1:
@@ -75,22 +70,19 @@ class Qwen2_VL(lmms):
             self.device_map = f"cuda:{accelerator.local_process_index}"
 
         if use_flash_attention_2:
-            self._model = Qwen2VLForConditionalGeneration.from_pretrained(
+            self._model =Qwen2_5_VLForConditionalGeneration.from_pretrained(
                 pretrained,
-                torch_dtype="auto",
+                torch_dtype=torch.bfloat16,
                 device_map=self.device_map,
                 attn_implementation="flash_attention_2",
             ).eval()
         else:
-            self._model = Qwen2VLForConditionalGeneration.from_pretrained(pretrained, torch_dtype="auto", device_map=self.device_map).eval()
+            self._model =Qwen2_5_VLForConditionalGeneration.from_pretrained(pretrained, torch_dtype="auto", device_map=self.device_map).eval()
         self.processor = AutoProcessor.from_pretrained(pretrained, max_pixels=max_pixels, min_pixels=min_pixels)
         self.max_pixels = max_pixels
         self.min_pixels = min_pixels
         self.max_num_frames = max_num_frames
         self.processor = AutoProcessor.from_pretrained(pretrained, max_pixels=max_pixels, min_pixels=min_pixels)
-        self.max_pixels = max_pixels
-        self.min_pixels = min_pixels
-        self.max_num_frames = max_num_frames
         self._tokenizer = AutoTokenizer.from_pretrained(pretrained)
 
         self._config = self.model.config
@@ -157,7 +149,7 @@ class Qwen2_VL(lmms):
         return self._world_size
 
     def loglikelihood(self, requests: List[Instance]) -> List[Tuple[float, bool]]:
-        raise NotImplementedError("Loglikelihood is not implemented for Qwen2_VL")
+        raise NotImplementedError("Loglikelihood is not implemented for Qwen2.5_VL")
 
     def flatten(self, input):
         new_list = []
@@ -256,11 +248,48 @@ class Qwen2_VL(lmms):
                     message.append({"role": "user", "content": [{"type": "text", "text": context}]})
 
                 messages.append(message)
+                print("message")
+                print(message)
+                
 
-            texts = [self.processor.apply_chat_template(msg, tokenize=False, add_generation_prompt=True) for msg in messages]
+            # texts = [self.processor.apply_chat_template(msg, tokenize=False, add_generation_prompt=True) for msg in messages]
+            # image_inputs, video_inputs, video_kwargs = process_vision_info(messages, return_video_kwargs=True)
+
+            # inputs = self.processor(
+            #     text=texts,
+            #     images=image_inputs,
+            #     videos=video_inputs,
+            #     padding=True,
+            #     return_tensors="pt",
+            #     **video_kwargs,
+            # )
+            # text = self.processor.apply_chat_template(
+            #     messages, tokenize=False, add_generation_prompt=True
+            # )
+            # image_inputs, video_inputs, video_kwargs = process_vision_info(messages, return_video_kwargs=True)
+            # inputs = processor(
+            #     text=[text],
+            #     images=image_inputs,
+            #     videos=video_inputs,
+            #     fps=fps,
+            #     padding=True,
+            #     return_tensors="pt",
+            #     **video_kwargs,
+            # )
+            text = self.processor.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+            print("text")
+            print(text)
             image_inputs, video_inputs = process_vision_info(messages)
-
-            inputs = self.processor(text=texts, images=image_inputs, videos=video_inputs, padding=True, return_tensors="pt")
+            inputs = self.processor(
+                text=text,
+                images=image_inputs,
+                videos=video_inputs,
+                fps=self.fps,
+                padding=True,
+                return_tensors="pt"
+            )
 
             if self.device_map == "auto":
                 inputs = inputs.to("cuda")
@@ -278,17 +307,18 @@ class Qwen2_VL(lmms):
 
             pad_token_id = self.tokenizer.pad_token_id
 
-            cont = self.model.generate(
-                **inputs,
-                eos_token_id=self.tokenizer.eos_token_id,
-                pad_token_id=pad_token_id,
-                do_sample=True if gen_kwargs["temperature"] > 0 else False,
-                temperature=gen_kwargs["temperature"],
-                top_p=gen_kwargs["top_p"],
-                num_beams=gen_kwargs["num_beams"],
-                max_new_tokens=gen_kwargs["max_new_tokens"],
-                use_cache=self.use_cache,
-            )
+            # cont = self.model.generate(
+            #     **inputs,
+            #     eos_token_id=self.tokenizer.eos_token_id,
+            #     pad_token_id=pad_token_id,
+            #     do_sample=True if gen_kwargs["temperature"] > 0 else False,
+            #     temperature=gen_kwargs["temperature"],
+            #     top_p=gen_kwargs["top_p"],
+            #     num_beams=gen_kwargs["num_beams"],
+            #     max_new_tokens=gen_kwargs["max_new_tokens"],
+            #     use_cache=self.use_cache,
+            # )
+            cont = self.model.generate(**inputs, max_new_tokens=128)
 
             generated_ids_trimmed = [out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, cont)]
             answers = self.processor.batch_decode(generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)
