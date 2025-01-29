@@ -35,20 +35,18 @@ class Qwen2_5_VL_Interleave(lmms):
 
     def __init__(
         self,
-        pretrained: str = "Qwen/Qwen2.5-VL-7B-Instruct",
+        pretrained: str = "Qwen/Qwen2.5-VL-3B-Instruct",
         device: Optional[str] = "cuda",
         device_map: Optional[str] = "auto",
         batch_size: Optional[Union[int, str]] = 1,
         use_cache=True,
-        use_flash_attention_2: Optional[bool] = True,
-        max_pixels: int = 1605632,
-        min_pixels: int = 3136,
-        max_num_frames: int = 20,
-        use_custom_video_loader: Optional[bool] = True,
+        use_flash_attention_2: Optional[bool] =  False,
+        min_pixels: int = 256 * 28 * 28,
+        max_pixels: int = 256 * 28 * 28,
+        max_num_frames: int = 32,
+        use_custom_video_loader: Optional[bool] = False,
         fps: Optional[float] = None,  # Only applicable if use_custom_video_loader is True
-        max_image_size: Optional[int] = 1024,  # Only applicable if use_custom_video_loader is True
-        continual_mode: bool = True,
-        response_persistent_folder: str = "./logs/persistent/qwen",  # We will cache the Gemini API response in this path and use it for future requests
+        max_image_size: Optional[int] = None,  # Only applicable if use_custom_video_loader is True
         **kwargs,
     ) -> None:
         super().__init__()
@@ -57,16 +55,11 @@ class Qwen2_5_VL_Interleave(lmms):
 
         self.use_custom_video_loader = use_custom_video_loader
         self.fps = fps
-        if self.fps and not self.use_custom_video_loader:
-            raise ValueError("FPS is only applicable if use_custom_video_loader is True")
+        # if self.fps and not self.use_custom_video_loader:
+        #     raise ValueError("FPS is only applicable if use_custom_video_loader is True")
         self.max_image_size = max_image_size
-        if self.max_image_size and not self.use_custom_video_loader:
-            raise ValueError("max_image_size is only applicable if use_custom_video_loader is True")
-
-        self.use_custom_video_loader = use_custom_video_loader
-        self.fps = fps
-        if self.fps and not self.use_custom_video_loader:
-            raise ValueError("FPS is only applicable if use_custom_video_loader is True")
+        # if self.max_image_size and not self.use_custom_video_loader:
+        #     raise ValueError("max_image_size is only applicable if use_custom_video_loader is True")
 
         accelerator = Accelerator()
         if accelerator.num_processes > 1:
@@ -82,7 +75,7 @@ class Qwen2_5_VL_Interleave(lmms):
         if use_flash_attention_2:
             self._model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
                 pretrained,
-                torch_dtype="auto",
+                torch_dtype=torch.bfloat16,
                 device_map=self.device_map,
                 attn_implementation="flash_attention_2",
             ).eval()
@@ -116,23 +109,23 @@ class Qwen2_5_VL_Interleave(lmms):
             self._rank = 0
             self._word_size = 1
 
-        self.continual_mode = continual_mode
-        if self.continual_mode and response_persistent_folder is None:
-            raise ValueError("Continual mode requires a persistent path for the response. We will cache the Gemini API response in this path and use it for future requests. Please provide a valid path.")
-        if self.continual_mode:
-            self.response_persistent_folder = response_persistent_folder
-            if not os.path.exists(self.response_persistent_folder):
-                os.makedirs(self.response_persistent_folder)
-            self.model_version = pretrained.split("/")[-1].replace("-", "_").lower()
-            self.response_persistent_file = os.path.join(self.response_persistent_folder, f"{self.model_version}_response.json")
+        # self.continual_mode = continual_mode
+        # if self.continual_mode and response_persistent_folder is None:
+        #     raise ValueError("Continual mode requires a persistent path for the response. We will cache the Gemini API response in this path and use it for future requests. Please provide a valid path.")
+        # if self.continual_mode:
+        #     self.response_persistent_folder = response_persistent_folder
+        #     if not os.path.exists(self.response_persistent_folder):
+        #         os.makedirs(self.response_persistent_folder)
+        #     self.model_version = pretrained.split("/")[-1].replace("-", "_").lower()
+        #     self.response_persistent_file = os.path.join(self.response_persistent_folder, f"{self.model_version}_response.json")
 
-            if os.path.exists(self.response_persistent_file):
-                with open(self.response_persistent_file, "r") as f:
-                    self.response_cache = json.load(f)
-                self.cache_mode = "resume"
-            else:
-                self.response_cache = {}
-                self.cache_mode = "start"
+        #     if os.path.exists(self.response_persistent_file):
+        #         with open(self.response_persistent_file, "r") as f:
+        #             self.response_cache = json.load(f)
+        #         self.cache_mode = "resume"
+        #     else:
+        #         self.response_cache = {}
+        #         self.cache_mode = "start"
 
     @property
     def config(self):
@@ -212,15 +205,15 @@ class Qwen2_5_VL_Interleave(lmms):
 
             task = task[0]
             split = split[0]
-            if self.continual_mode and self.cache_mode == "resume":
-                doc_uuid = get_uuid(task, split, doc_id)
-                # print(doc_uuid)
-                if doc_uuid in self.response_cache:
-                    content = self.response_cache[doc_uuid]
-                    if content:
-                        res.extend(content)
-                        pbar.update(1)
-                        continue
+            # if self.continual_mode and self.cache_mode == "resume":
+            #     doc_uuid = get_uuid(task, split, doc_id)
+            #     # print(doc_uuid)
+            #     if doc_uuid in self.response_cache:
+            #         content = self.response_cache[doc_uuid]
+            #         if content:
+            #             res.extend(content)
+            #             pbar.update(1)
+            #             continue
             visuals = [doc_to_visual[i](self.task_dict[task][split][ids]) for i, ids in enumerate(doc_id)]
 
             gen_kwargs = all_gen_kwargs[0]
@@ -252,7 +245,7 @@ class Qwen2_5_VL_Interleave(lmms):
             messages = []
             processed_visuals = []
             for i, context in enumerate(contexts):
-                context += "\nPlease think step by step."
+                # context += "\nPlease think step by step."
 
                 # print("context", context)
 
@@ -341,16 +334,29 @@ class Qwen2_5_VL_Interleave(lmms):
 
                 messages.append(message)
 
+            # texts = [self.processor.apply_chat_template(msg, tokenize=False, add_generation_prompt=True) for msg in messages]
+            # image_inputs, video_inputs, video_kwargs = process_vision_info(messages, return_video_kwargs=True)
+
+            # inputs = self.processor(
+            #     text=texts,
+            #     images=image_inputs,
+            #     videos=video_inputs,
+            #     padding=True,
+            #     return_tensors="pt",
+            #     **video_kwargs,
+            # )
+            
+            
             texts = [self.processor.apply_chat_template(msg, tokenize=False, add_generation_prompt=True) for msg in messages]
-            image_inputs, video_inputs, video_kwargs = process_vision_info(messages, return_video_kwargs=True)
+            image_inputs, video_inputs = process_vision_info(messages)
 
             inputs = self.processor(
                 text=texts,
                 images=image_inputs,
                 videos=video_inputs,
                 padding=True,
-                return_tensors="pt",
-                **video_kwargs,
+                #fps=self.fps,
+                return_tensors="pt"
             )
 
             if self.device_map == "auto":
@@ -369,17 +375,18 @@ class Qwen2_5_VL_Interleave(lmms):
 
             pad_token_id = self.tokenizer.pad_token_id
 
-            cont = self.model.generate(
-                **inputs,
-                eos_token_id=self.tokenizer.eos_token_id,
-                pad_token_id=pad_token_id,
-                do_sample=True if gen_kwargs["temperature"] > 0 else False,
-                temperature=gen_kwargs["temperature"],
-                top_p=gen_kwargs["top_p"],
-                num_beams=gen_kwargs["num_beams"],
-                max_new_tokens=gen_kwargs["max_new_tokens"],
-                use_cache=self.use_cache,
-            )
+            # cont = self.model.generate(
+            #     **inputs,
+            #     eos_token_id=self.tokenizer.eos_token_id,
+            #     pad_token_id=pad_token_id,
+            #     do_sample=True if gen_kwargs["temperature"] > 0 else False,
+            #     temperature=gen_kwargs["temperature"],
+            #     top_p=gen_kwargs["top_p"],
+            #     num_beams=gen_kwargs["num_beams"],
+            #     max_new_tokens=gen_kwargs["max_new_tokens"],
+            #     use_cache=self.use_cache,
+            # )
+            cont = self.model.generate(**inputs, max_new_tokens=128)
 
             generated_ids_trimmed = [out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, cont)]
             answers = self.processor.batch_decode(generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)
@@ -394,11 +401,11 @@ class Qwen2_5_VL_Interleave(lmms):
                 pbar.update(1)
             # reorder this group of results back to original unsorted form
 
-            if self.continual_mode is True:  # Cache the response
-                doc_uuid = get_uuid(task, split, doc_id)
-                self.response_cache[doc_uuid] = content
-                with open(self.response_persistent_file, "w") as f:
-                    json.dump(self.response_cache, f)
+            # if self.continual_mode is True:  # Cache the response
+            #     doc_uuid = get_uuid(task, split, doc_id)
+            #     self.response_cache[doc_uuid] = content
+            #     with open(self.response_persistent_file, "w") as f:
+            #         json.dump(self.response_cache, f)
 
         res = re_ords.get_original(res)
 

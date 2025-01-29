@@ -37,10 +37,10 @@ class Qwen2_5_VL(lmms):
         device_map: Optional[str] = "auto",
         batch_size: Optional[Union[int, str]] = 1,
         use_cache=True,
-        use_flash_attention_2: Optional[bool] = True,
+        use_flash_attention_2: Optional[bool] =  False,
         min_pixels: int = 256 * 28 * 28,
-        max_pixels: int = 1280 * 28 * 28,
-        max_num_frames: int = 256,
+        max_pixels: int = 256 * 28 * 28,
+        max_num_frames: int = 32,
         use_custom_video_loader: Optional[bool] = False,
         fps: Optional[float] = None,  # Only applicable if use_custom_video_loader is True
         max_image_size: Optional[int] = None,  # Only applicable if use_custom_video_loader is True
@@ -224,7 +224,7 @@ class Qwen2_5_VL(lmms):
                             first_frame = vr[0].asnumpy()
                             height, width = first_frame.shape[:2]
                             # max_pixels = height * width
-                            message.append({"role": "user", "content": [{"type": "video", "video": visual, "max_pixels": self.max_pixels}, {"type": "text", "text": context}]})
+                            message.append({"role": "user", "content": [{"type": "video", "video": visual, "max_pixels": 360*420}, {"type": "text", "text": context}]})
                     elif isinstance(visual, Image.Image):  # Single image
                         base64_image = visual.convert("RGB")
                         buffer = BytesIO()
@@ -248,8 +248,8 @@ class Qwen2_5_VL(lmms):
                     message.append({"role": "user", "content": [{"type": "text", "text": context}]})
 
                 messages.append(message)
-                print("message")
-                print(message)
+                # print("message")
+                # print(message)
                 
 
             # texts = [self.processor.apply_chat_template(msg, tokenize=False, add_generation_prompt=True) for msg in messages]
@@ -279,14 +279,12 @@ class Qwen2_5_VL(lmms):
             text = self.processor.apply_chat_template(
                 messages, tokenize=False, add_generation_prompt=True
             )
-            print("text")
-            print(text)
             image_inputs, video_inputs = process_vision_info(messages)
             inputs = self.processor(
                 text=text,
                 images=image_inputs,
                 videos=video_inputs,
-                fps=self.fps,
+                #fps=self.fps,
                 padding=True,
                 return_tensors="pt"
             )
