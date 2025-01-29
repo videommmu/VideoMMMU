@@ -305,18 +305,18 @@ class Qwen2_5_VL(lmms):
 
             pad_token_id = self.tokenizer.pad_token_id
 
-            # cont = self.model.generate(
-            #     **inputs,
-            #     eos_token_id=self.tokenizer.eos_token_id,
-            #     pad_token_id=pad_token_id,
-            #     do_sample=True if gen_kwargs["temperature"] > 0 else False,
-            #     temperature=gen_kwargs["temperature"],
-            #     top_p=gen_kwargs["top_p"],
-            #     num_beams=gen_kwargs["num_beams"],
-            #     max_new_tokens=gen_kwargs["max_new_tokens"],
-            #     use_cache=self.use_cache,
-            # )
-            cont = self.model.generate(**inputs, max_new_tokens=1024)
+            cont = self.model.generate(
+                **inputs,
+                eos_token_id=self.tokenizer.eos_token_id,
+                pad_token_id=pad_token_id,
+                do_sample=True if gen_kwargs["temperature"] > 0 else False,
+                temperature=gen_kwargs["temperature"],
+                top_p=gen_kwargs["top_p"],
+                num_beams=gen_kwargs["num_beams"],
+                max_new_tokens=gen_kwargs["max_new_tokens"],
+                use_cache=self.use_cache,
+            )
+            #cont = self.model.generate(**inputs, max_new_tokens=1024)
 
             generated_ids_trimmed = [out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, cont)]
             answers = self.processor.batch_decode(generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)
