@@ -316,7 +316,7 @@ class Qwen2_5_VL(lmms):
             #     max_new_tokens=gen_kwargs["max_new_tokens"],
             #     use_cache=self.use_cache,
             # )
-            cont = self.model.generate(**inputs, max_new_tokens=128)
+            cont = self.model.generate(**inputs, max_new_tokens=1024)
 
             generated_ids_trimmed = [out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, cont)]
             answers = self.processor.batch_decode(generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)
