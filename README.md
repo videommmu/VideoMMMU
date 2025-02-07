@@ -1,7 +1,7 @@
 # <img src="./assets/pyramid-chart.png" alt="Video-MMMU Icon" style="height: 30px; vertical-align: middle;"> Video-MMMU: Evaluating Knowledge Acquisition from Multi-Discipline Professional Videos
 
 
-🏠 [LMMs-Lab Homepage](https://lmms-lab.framer.ai) | <a href="https://emoji.gg/emoji/1684-discord-thread"><img src="https://cdn3.emoji.gg/emojis/1684-discord-thread.png" width="14px" height="14px" alt="Discord_Thread"></a> [discord/lmms-eval](https://discord.gg/zdkwKUqrPy)
+🏠 [LMMs-Lab Homepage](https://lmms-lab.framer.ai) | <a href="https://emoji.gg/emoji/1684-discord-thread"><img src="https://cdn3.emoji.gg/emojis/1684-discord-thread.png" width="14px" height="14px" alt="Discord_Thread"></a> [discord/lmms-eval](https://discord.gg/zdkwKUqrPy) | 🎓 [Project Page](https://videommmu.github.io/) |📝 [Arxiv Paper](https://arxiv.org/abs/2501.13826)
 
 ---
 
@@ -72,3 +72,15 @@ accelerate launch --num_processes=1 --main_process_port 12345 -m lmms_eval \
     --log_samples_suffix debug \
     --output_path ./logs/
 ```
+
+## Citation
+
+```shell
+@article{hu2025videommmu,
+    title={Video-MMMU: Evaluating Knowledge Acquisition from Multi-Discipline Professional Videos},
+    author={Kairui Hu and Penghao Wu and Fanyi Pu and Wang Xiao and Yuanhan Zhang and Xiang Yue and Bo Li and Ziwei Liu},
+    booktitle={arXiv preprint arXiv:2501.13826},
+    year={2025},
+    url={https://arxiv.org/abs/2501.13826}
+}
+
