@@ -8,6 +8,9 @@
 ## Annoucement
 - [2025-1] 🎉🎉 We introduce [VideoMMMU](https://videommmu.github.io/), a massive, multi-modal, multi-disciplinary video benchmark that evaluates the knowledge acquisition capability from educational videos.
 
+## Access
+Please sign the License Agreement at the following link: [License Agreement](https://forms.gle/1ScZWykgemdEbpHQ8).
+
 ## Evaluation
 The evaluation of VideoMMMU is integrated into [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval/tree/main). Below is a detailed instruction of the evaluation.
 
