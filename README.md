@@ -83,7 +83,7 @@ accelerate launch --num_processes=1 --main_process_port 12345 -m lmms_eval \
 
 ---
 
-We evaluate various open-source and proprietary LMMs. The table below provides a detailed comparison. For submitting your model results, please contact **Kairui Hu** at *kairuih12@gmail.com* or **Bo Li** at *drluodian@gmail.com*.
+We evaluate various open-source and proprietary LMMs. The table below provides a detailed comparison. To submit your model results, please send an email to videommmu2025.com.
 
 
 | Model | Overall | Perception | Comprehension | Adaptation | Δknowledge |
