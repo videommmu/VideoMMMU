@@ -1,18 +1,16 @@
 # <img src="./assets/pyramid-chart.png" alt="Video-MMMU Icon" style="height: 30px; vertical-align: middle;"> Video-MMMU: Evaluating Knowledge Acquisition from Multi-Discipline Professional Videos
 
 
-🏠 [LMMs-Lab Homepage](https://lmms-lab.framer.ai) | <a href="https://emoji.gg/emoji/1684-discord-thread"><img src="https://cdn3.emoji.gg/emojis/1684-discord-thread.png" width="14px" height="14px" alt="Discord_Thread"></a> [discord/lmms-eval](https://discord.gg/zdkwKUqrPy) | 🎓 [Project Page](https://videommmu.github.io/) |📝 [Arxiv Paper](https://arxiv.org/abs/2501.13826)
+🏠 [LMMs-Lab Homepage](https://lmms-lab.framer.ai) | <a href="https://emoji.gg/emoji/1684-discord-thread"><img src="https://cdn3.emoji.gg/emojis/1684-discord-thread.png" width="14px" height="14px" alt="Discord_Thread"></a> [discord/lmms-eval](https://discord.gg/zdkwKUqrPy) | 🎓 [Project Page](https://videommmu.github.io/) |📝 [Arxiv Paper](https://arxiv.org/abs/2501.13826) | 🤗 [Dataset](https://huggingface.co/datasets/lmms-lab/VideoMMMU)
 
 ---
 
 ## Annoucement
+- [2025-2] 🎉🎉 We update the leaderboard for [Qwen-2.5-VL-72B](https://huggingface.co/Qwen/Qwen2.5-VL-72B-Instruct) and [mPLUG-Owl3-7B](https://github.com/X-PLUG/mPLUG-Owl/tree/main/mPLUG-Owl3).
 - [2025-1] 🎉🎉 We introduce [VideoMMMU](https://videommmu.github.io/), a massive, multi-modal, multi-disciplinary video benchmark that evaluates the knowledge acquisition capability from educational videos.
 
-## Access
-Please sign the License Agreement at the following link: [License Agreement](https://forms.gle/1ScZWykgemdEbpHQ8). For further inquiries, please send an email to videommmu2025@gmail.com 😀
-
 ## License
-VideoMMMU is only used for academic research. Commercial use in any form is prohibited. The copyright of all videos belongs to the video owners. Without prior approval, you cannot distribute, publish, copy, disseminate, or modify VideoMMMU in whole or in part. You must strictly comply with the above restrictions.
+VideoMMMU is only used for academic research. Commercial use in any form is prohibited. The copyright of all videos belongs to the video owners. Without prior approval, you cannot distribute, publish, copy, disseminate, or modify VideoMMMU in whole or in part. You must strictly comply with the above restrictions. For further inquiries, please send an email to videommmu2025@gmail.com.
 
 ## Evaluation
 The evaluation of VideoMMMU is integrated into [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval/tree/main). Below is a detailed instruction of the evaluation.
@@ -38,9 +36,11 @@ cd LLaVA-NeXT
 pip install -e .
 ```
 
-## Command
+## Evaluation
 
-**Evaluation of LLaVA-OneVision on VideoMMMU**
+We use [LLaVA-OneVision-7B](https://huggingface.co/llava-hf/llava-onevision-qwen2-7b-ov-hf) as an example in the following commands. You can change `--model`, and `--model_args` based on your requirement.
+
+**Evaluation of LLaVA-OneVision on VideoMMMU (all 3 tracks)**
 
 ```bash
 accelerate launch --num_processes=1 --main_process_port 12345 -m lmms_eval \
@@ -55,6 +55,7 @@ accelerate launch --num_processes=1 --main_process_port 12345 -m lmms_eval \
 
 **Evaluate a single track of VideoMMMU**
 
+Perception track: 
 ```bash
 accelerate launch --num_processes=1 --main_process_port 12345 -m lmms_eval \
 --model llava_onevision \
@@ -66,7 +67,35 @@ accelerate launch --num_processes=1 --main_process_port 12345 -m lmms_eval \
     --output_path ./logs/
 ```
 
-**Evaluate the question_only track of VideoMMMU (Knowledge Acquisition Experiment)**
+Comprehension track: 
+```bash
+accelerate launch --num_processes=1 --main_process_port 12345 -m lmms_eval \
+--model llava_onevision \
+--model_args pretrained=lmms-lab/llava-onevision-qwen2-7b-ov,conv_template=qwen_1_5,model_name=llava_qwen,max_frames_num=32,torch_dype=bfloat16 \
+    --tasks video_mmmu_comprehension \
+    --batch_size 1 \
+    --log_samples \
+    --log_samples_suffix debug \
+    --output_path ./logs/
+```
+
+Adaptation track: 
+```bash
+accelerate launch --num_processes=1 --main_process_port 12345 -m lmms_eval \
+--model llava_onevision \
+--model_args pretrained=lmms-lab/llava-onevision-qwen2-7b-ov,conv_template=qwen_1_5,model_name=llava_qwen,max_frames_num=32,torch_dype=bfloat16 \
+    --tasks video_mmmu_adaptation \
+    --batch_size 1 \
+    --log_samples \
+    --log_samples_suffix debug \
+    --output_path ./logs/
+```
+
+**Evaluate the question_only track of VideoMMMU -- Knowledge Acquisition Experiment (∆knowledge)**
+
+The "question_only" track consists of a 2-second video that contains only the image associated with the Adaptation Track question.
+
+To evaluate this setting, you can use the following command:
 
 ```bash
 accelerate launch --num_processes=1 --main_process_port 12345 -m lmms_eval \
@@ -78,6 +107,13 @@ accelerate launch --num_processes=1 --main_process_port 12345 -m lmms_eval \
     --log_samples_suffix debug \
     --output_path ./logs/
 ```
+
+***Adaptation Track setting***
+
+To ensure compatibility with [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval), the image associated with the Adaptation Track question has been appended in the last frame of the video. A prompt has been added to notify the model that the question image is located in the final frame of the video for the Adaptation Track.
+
+If you use the interleave setting, you can manually insert the image (either the last frame of the video or "image 1" from the HF dataset) into the placeholder <image 1>. 
+
 
 ## Video-MMMU Leaderboard
 
@@ -103,6 +139,7 @@ We evaluate various open-source and proprietary LMMs. The table below provides a
 | [InternVL2-8B](https://huggingface.co/OpenGVLab/InternVL2-8B) | 37.44 | 47.33 | 33.33 | 31.67 | -8.5 |
 | [LLaVA-Video-7B](https://huggingface.co/lmms-lab/LLaVA-Video-7B-Qwen2) | 36.11 | 41.67 | 33.33 | 33.33 | -5.3 |
 | [VILA1.5-40B](https://huggingface.co/Efficient-Large-Model/VILA1.5-40b) | 34.00 | 38.67 | 30.67 | 32.67 | +9.4 |
+| [LLaVA-OneVision-7B](https://huggingface.co/llava-hf/llava-onevision-qwen2-7b-ov-hf) | 33.89 | 40.00 | 31.00 | 30.67 | -5.6 |
 | [Llama-3.2-11B](https://ai.meta.com/blog/llama-3-2-connect-2024-vision-edge-mobile-devices/) | 30.00 | 35.67 | 32.33 | 22.00 | - |
 | [LongVA-7B](https://huggingface.co/lmms-lab/LongVA-7B) | 23.98 | 24.00 | 24.33 | 23.67 | -7.0 |
 | [VILA1.5-8B](https://huggingface.co/Efficient-Large-Model/Llama-3-VILA1.5-8B-Fix) | 20.89 | 20.33 | 17.33 | 25.00 | +5.9 |
