@@ -93,7 +93,7 @@ accelerate launch --num_processes=1 --main_process_port 12345 -m lmms_eval \
 
 **Evaluate the question_only track of VideoMMMU -- Knowledge Acquisition Experiment (∆knowledge)**
 
-The "question_only" track consists of a 2-second video that contains only the image associated with the Adaptation Track question.
+The "question_only" track consists of 2-second videos that contain the image associated with the Adaptation Track question. This is the baseline for ∆knowledge.
 
 To evaluate this setting, you can use the following command:
 
@@ -110,9 +110,9 @@ accelerate launch --num_processes=1 --main_process_port 12345 -m lmms_eval \
 
 ***Adaptation Track setting***
 
-To ensure compatibility with [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval), the image associated with the Adaptation Track question has been appended in the last frame of the video. A prompt has been added to notify the model that the question image is located in the final frame of the video for the Adaptation Track.
+To ensure compatibility with [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval), the image associated with the Adaptation Track question has been appended in the last frame of the video. A prompt has been added to notify the model that the question image is located in the last frame of the video for the Adaptation Track. Hence, you can directly run the commands in the above section. 
 
-If you use the interleave setting, you can manually insert the image (either the last frame of the video or "image 1" from the HF dataset) into the placeholder <image 1>. 
+If you prefer to use an interleave setting, you can manually insert the image (either the last frame of the video or the "image 1" entry from the HF dataset) into the placeholder <image 1>. 
 
 
 ## Video-MMMU Leaderboard
