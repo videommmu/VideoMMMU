@@ -14,20 +14,57 @@
 
 ## 🔥 News
 - [2025-2] 🎉🎉 We update the leaderboard for [Qwen-2.5-VL-72B](https://huggingface.co/Qwen/Qwen2.5-VL-72B-Instruct) and [mPLUG-Owl3-7B](https://github.com/X-PLUG/mPLUG-Owl/tree/main/mPLUG-Owl3).
-- [2025-1] 🎉🎉 We introduce [VideoMMMU](https://videommmu.github.io/), a massive, multi-modal, multi-disciplinary video benchmark that evaluates the knowledge acquisition capability from educational videos.
+- [2025-1] 🎉🎉 We introduce [VideoMMMU](https://videommmu.github.io/), a massive, multi-modal, multi-disciplinary video benchmark that evaluates the **knowledge acquisition capability** from educational videos.
 
-## 🧠 Overview
-![Figure1](assets/figure1.png)
-Video-MMMU evaluates the **knowledge acquisition capability** from educational videos through three main features:
 
-**1) Knowledge-intensive Video Collection:**
-Our dataset comprises 300 lecture-style videos spanning 6 professional disciplines: Art, Business, Science, Medicine, Humanities, and Engineering, with 30 subjects distributed among them.
 
-**2) Knowledge Acquisition-based Question Design:**
-Each video includes three question-answer pairs aligned with the three knowledge acquisition stages: **Perception** (identifying key information related to the knowledge), **Comprehension** (understanding the underlying concepts), and **Adaptation** (applying knowledge to new scenarios).
+## 🧠 Overview  
+<img src="./assets/figure_1.png" alt="Figure1" width="65%">  
 
-**3) Quantitative Knowledge Acquisition Assessment:**
-We propose a knowledge acquisition metric, denoted as **Δknowledge**, to measure performance gains on practice exam questions after learning from videos. This metric enables us to quantitatively evaluate how effectively large multimodal models (LMMs) can assimilate and utilize the information presented in the videos to solve real-world, novel problems.
+Video-MMMU is the first benchmark to assess knowledge acquisition from educational videos, evaluating how well LMMs learn new knowledge from videos and apply what they learn in practice.
+
+### 1) Knowledge-Intensive Video Collection
+Video-MMMU features 300 **lecture-style videos** covering 6 professional disciplines—Art, Business, Science, Medicine, Humanities, and Engineering, spanning 30 subjects.
+
+### 2) Knowledge Acquisition-Based Question Design  
+Each video is accompanied by 3 QA pairs, designed to evaluate video-based learning at different cognitive levels:  
+- **Perception** – Identifying key information.  
+- **Comprehension** – Understanding underlying concepts.  
+- **Adaptation** – Applying knowledge to new scenarios.  
+
+This results in 900 question-answer pairs (300 videos × 3 QA pairs per video), systematically measuring a model's ability to acquire and apply knowledge from videos.  
+
+
+
+## 🔍 A New Perspective on VideoQA  
+
+### Videos as a Knowledge Source 
+Traditional VideoQA benchmarks focus primarily on scene-based understanding, evaluating how well models interpret visual content. Video-MMMU takes a different approach—it is the first to treat videos as a **source of knowledge**, assessing how effectively large multimodal models (LMMs) acquire and apply information from educational videos.  
+
+### Measuring Knowledge Gain: The Δknowledge Metric
+A key novelty of Video-MMMU is that it evaluates not just a model’s absolute accuracy but also its **delta accuracy**—the improvement in performance after learning from a video. A model may initially fail to solve an exam question, but we give the model a video where a human could learn to solve the question by watching the video. Video-MMMU tests how well LMMs improve their performance after watching the videos. Video-MMMU introduces Δknowledge, a metric that quantifies knowledge gain by evaluating a model’s improvement on practice exam questions (Adaptation track) after watching a video. 
+
+### Why Is This Important?  
+Intelligence is not just about solving tasks, but also about **how efficiently a model can acquire and apply new knowledge**. Video-MMMU is the first benchmarks designed to assess this capability, marking a significant step toward more advanced multimodal evaluation. 
+
+
+
+## ❓QA Design
+<img src="./assets/figure_2.png" alt="Figure1" width="65%">
+
+**Perception**  
+- ASR (Automatic Speech Recognition): The **Art** category (top left).  
+- OCR (Optical Character Recognition): The **Business** category (bottom left).  
+
+**Comprehension**  
+- Concept Comprehension: The **Humanities** category (top center).  
+- Problem-Solving Strategy Comprehension: The **Science** category (bottom center).  
+
+**Adaptation**  
+- Case Study Analysis: The **Medicine** category (top right).  
+- Problem-Solving Strategy Adaptation: The **Engineering** category (bottom right).  
+
+
 
 ## 🛠️ Evaluation Pipeline
 The evaluation of VideoMMMU is integrated into [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval/tree/main). Below is a detailed instruction of the evaluation.
