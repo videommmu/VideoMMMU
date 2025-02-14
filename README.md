@@ -1,21 +1,37 @@
 # <img src="./assets/pyramid-chart.png" alt="Video-MMMU Icon" style="height: 30px; vertical-align: middle;"> Video-MMMU: Evaluating Knowledge Acquisition from Multi-Discipline Professional Videos
 
+<p align="center">
+  <a href="https://videommmu.github.io/"><img src="https://img.shields.io/badge/🎓-Website-red" height="23"></a>
+  <a href="https://arxiv.org/abs/2501.13826"><img src="https://img.shields.io/badge/📝-Paper-blue" height="23"></a>
+  <a href="https://huggingface.co/datasets/lmms-lab/VideoMMMU"><img src="https://img.shields.io/badge/🤗-Dataset-yellow" height="23"></a>
+  <a href="https://lmms-lab.framer.ai"><img src="https://img.shields.io/badge/🏠-LMMs_Lab_Homepage-green" height="23"></a>
+  <a href="https://discord.gg/zdkwKUqrPy"><img src="https://img.shields.io/badge/💬-Discord_LMMs_Eval-beige" height="23"></a>
+</p>
 
-🏠 [LMMs-Lab Homepage](https://lmms-lab.framer.ai) | <a href="https://emoji.gg/emoji/1684-discord-thread"><img src="https://cdn3.emoji.gg/emojis/1684-discord-thread.png" width="14px" height="14px" alt="Discord_Thread"></a> [discord/lmms-eval](https://discord.gg/zdkwKUqrPy) | 🎓 [Project Page](https://videommmu.github.io/) |📝 [Arxiv Paper](https://arxiv.org/abs/2501.13826) | 🤗 [Dataset](https://huggingface.co/datasets/lmms-lab/VideoMMMU)
+🖋 [Kairui Hu](https://kairuihu.github.io/), [Penghao Wu](https://penghao-wu.github.io/), [Fanyi Pu](https://github.com/pufanyi), [Wang Xiao](https://www.ntu.edu.sg/s-lab), [Xiang Yue](https://xiangyue9607.github.io/), [Bo Li](https://brianboli.com/), [Yuanhan Zhang](https://zhangyuanhan-ai.github.io/), and [Ziwei Liu](https://liuziwei7.github.io/)
 
 ---
 
-## Annoucement
+## 🔥 News
 - [2025-2] 🎉🎉 We update the leaderboard for [Qwen-2.5-VL-72B](https://huggingface.co/Qwen/Qwen2.5-VL-72B-Instruct) and [mPLUG-Owl3-7B](https://github.com/X-PLUG/mPLUG-Owl/tree/main/mPLUG-Owl3).
 - [2025-1] 🎉🎉 We introduce [VideoMMMU](https://videommmu.github.io/), a massive, multi-modal, multi-disciplinary video benchmark that evaluates the knowledge acquisition capability from educational videos.
 
-## License
-VideoMMMU is only used for academic research. Commercial use in any form is prohibited. The copyright of all videos belongs to the video owners. Without prior approval, you cannot distribute, publish, copy, disseminate, or modify VideoMMMU in whole or in part. You must strictly comply with the above restrictions. For further inquiries, please send an email to videommmu2025@gmail.com.
+## 🧠 Overview
+Video-MMMU evaluates the **knowledge acquisition capability** from educational videos through three main features:
 
-## Evaluation
+**1) Knowledge-intensive Video Collection:**
+Our dataset comprises 300 lecture-style videos spanning 6 professional disciplines: Art, Business, Science, Medicine, Humanities, and Engineering, with 30 subjects distributed among them.
+
+**2) Knowledge Acquisition-based Question Design:**
+Each video includes three question-answer pairs aligned with the three knowledge acquisition stages: **Perception** (identifying key information related to the knowledge), **Comprehension** (understanding the underlying concepts), and **Adaptation** (applying knowledge to new scenarios).
+
+**3) Quantitative Knowledge Acquisition Assessment:**
+We propose a knowledge acquisition metric, denoted as **Δknowledge**, to measure performance gains on practice exam questions after learning from videos. This metric enables us to quantitatively evaluate how effectively large multimodal models (LMMs) can assimilate and utilize the information presented in the videos to solve real-world, novel problems.
+
+## 🛠️ Evaluation Pipeline
 The evaluation of VideoMMMU is integrated into [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval/tree/main). Below is a detailed instruction of the evaluation.
 
-## Installation
+### Installation
 
 For formal usage, you can install the package from PyPI by running the following command:
 ```bash
@@ -36,7 +52,7 @@ cd LLaVA-NeXT
 pip install -e .
 ```
 
-## Evaluation
+### Evaluation
 
 We use [LLaVA-OneVision-7B](https://huggingface.co/llava-hf/llava-onevision-qwen2-7b-ov-hf) as an example in the following commands. You can change `--model`, and `--model_args` based on your requirement.
 
@@ -110,13 +126,14 @@ accelerate launch --num_processes=1 --main_process_port 12345 -m lmms_eval \
 
 ***Adaptation Track setting***
 
-To ensure compatibility with [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval), the image associated with the Adaptation Track question has been appended in the last frame of the video. A prompt has been added to notify the model that the question image is located in the last frame of the video for the Adaptation Track. Hence, you can directly run the commands in the above section. 
+To ensure compatibility with [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval), the image associated with the Adaptation Track question has been appended in the last frame of the video. A prompt has also been added to inform the model that the question image is located in this final frame.
 
-If you prefer to use an interleave setting, you can manually insert the image (either the last frame of the video or the "image 1" entry from the HF dataset) into the placeholder <image 1>. 
+As a result, you can execute the commands from the previous section without manually interleaving the image and video.
+
+If you prefer an interleaved format, you can manually insert the image (either the last frame of the video or the ```image 1``` entry from the HF dataset) into the designated placeholder ```<image 1>```.
 
 
-## Video-MMMU Leaderboard
-
+## 🎓 Video-MMMU Leaderboard
 ---
 
 We evaluate various open-source and proprietary LMMs. The table below provides a detailed comparison. To submit your model results, please send an email to videommmu2025@gmail.com.
