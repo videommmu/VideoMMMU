@@ -36,13 +36,17 @@ This results in 900 question-answer pairs (300 videos × 3 QA pairs per video), 
 
 
 
-## 🔍 A New Perspective on VideoQA  
+## 🔍 A New Perspective on VideoQA 
+
+<img src="./assets/wrongtoright.png" alt="wrongtoright" width="65%">
+*Figure 2: The model improves its ability to solve previously incorrect problems by watching the video. The ability to solve problems is not the only evaluation criterion; acquiring knowledge and correcting previously incorrect answers is also an important capability.*
+
 
 ### Videos as a Knowledge Source 
 Traditional VideoQA benchmarks focus primarily on scene-based understanding, evaluating how well models interpret visual content. Video-MMMU takes a different approach—it is the first to treat videos as a **source of knowledge**, assessing how effectively large multimodal models (LMMs) acquire and apply information from educational videos.  
 
 ### Measuring Knowledge Gain: The Δknowledge Metric
-A key novelty of Video-MMMU is that it evaluates not just a model’s absolute accuracy but also its **delta accuracy**—the improvement in performance after learning from a video. A model may initially fail to solve an exam question, but we give the model a video where a human could learn to solve the question by watching the video. Video-MMMU tests how well LMMs improve their performance after watching the videos. Video-MMMU introduces Δknowledge, a metric that quantifies knowledge gain by evaluating a model’s improvement on practice exam questions (Adaptation track) after watching a video. 
+A key novelty of Video-MMMU is that it evaluates not just a model’s absolute accuracy but also its **delta accuracy**—the improvement in performance after learning from a video. A model may initially fail to solve an exam question, but we give the model a video where a human could learn to solve the question by watching the video. Video-MMMU tests how well LMMs improve their performance after watching the videos. Video-MMMU introduces Δknowledge to quantify knowledge gain by evaluating a model’s improvement on practice exam questions (Adaptation track) after watching a video. 
 
 ### Why Is This Important?  
 Intelligence is not just about solving tasks, but also about **how efficiently a model can acquire and apply new knowledge**. Video-MMMU is the first benchmarks designed to assess this capability, marking a significant step toward more advanced multimodal evaluation. 
