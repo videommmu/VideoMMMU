@@ -35,26 +35,7 @@ Each video is accompanied by 3 QA pairs, designed to evaluate video-based learni
 - **Adaptation** – Applying knowledge to new scenarios.  
 
 This results in 900 question-answer pairs (300 videos × 3 QA pairs per video), systematically measuring a model's ability to acquire and apply knowledge from videos.  
-
-
-
-## 🔍 A New Perspective on VideoQA 
-<div align="center">
-    <img src="./assets/wrongtoright.png" alt="wrongtoright" width="75%">
-    <p><em>The model improves its ability to solve previously incorrect problems by watching the video. The ability to solve problems is not the only evaluation criterion; gaining knowledge and correcting previously incorrect answers is also an important capability.</em></p>
-</div>
-
-
-### Videos as a Knowledge Source 
-Traditional VideoQA benchmarks focus primarily on scene-based understanding, evaluating how well models interpret visual content. Video-MMMU takes a different approach—it is the first to treat videos as a **source of knowledge**, assessing how effectively large multimodal models (LMMs) acquire and apply information from educational videos.  
-
-### Measuring Knowledge Gain: The Δknowledge Metric
-A key novelty of Video-MMMU is that it evaluates not just a model’s absolute accuracy but also its **delta accuracy**—the improvement in performance after learning from a video. A model may initially fail to solve an exam question, but we give the model a video where a human could learn to solve the question by watching the video. Video-MMMU tests how well LMMs improve their performance after watching the videos. Video-MMMU introduces Δknowledge to quantify knowledge gain by evaluating a model’s improvement on practice exam questions (Adaptation track) after watching a video. 
-
-### Why Is This Important?  
-Intelligence is not just about solving tasks, but also about **how efficiently a model can acquire and apply new knowledge**. Video-MMMU is the first benchmark to assess this capability, marking a significant step toward more advanced multimodal evaluation. 
-
-
+ 
 
 ## ❓QA Design
 <div align="center">
@@ -63,16 +44,27 @@ Intelligence is not just about solving tasks, but also about **how efficiently a
 
 **Perception**  
 - ASR (Automatic Speech Recognition): The **Art** category (top left).  
-- OCR (Optical Character Recognition): The **Business** category (bottom left).  
-
+- OCR (Optical Character Recognition): The **Business** category (bottom left).
+  
 **Comprehension**  
 - Concept Comprehension: The **Humanities** category (top center).  
-- Problem-Solving Strategy Comprehension: The **Science** category (bottom center).  
+- Problem-Solving Strategy Comprehension: The **Science** category (bottom center).
 
 **Adaptation**  
 - Case Study Analysis: The **Medicine** category (top right).  
-- Problem-Solving Strategy Adaptation: The **Engineering** category (bottom right).  
+- Problem-Solving Strategy Adaptation: The **Engineering** category (bottom right).
 
+<div align="center">
+    <img src="./assets/figure_3.png" alt="Figure 3" width="75%">
+</div>
+
+## 🔍 A New Perspective on VideoQA 
+
+### Videos as a Knowledge Source
+Traditional VideoQA benchmarks focus primarily on scene-based understanding, evaluating how well models interpret visual content. Video-MMMU takes a different approach—it is the first to treat videos as a **source of knowledge**, assessing how effectively large multimodal models (LMMs) acquire and apply information from educational videos.  
+
+### Measuring Knowledge Gain: The Δknowledge Metric
+A key novelty of Video-MMMU is that it evaluates not just a model’s absolute accuracy but also its **delta accuracy**—the improvement in performance after learning from a video. A model may initially fail to solve an exam question, but we give the model a video where a human could learn to solve the question by watching the video. Video-MMMU tests how well LMMs **improve their performance** after watching the videos. Video-MMMU introduces **Δknowledge** to quantify knowledge gain by evaluating a model’s improvement on practice exam questions (Adaptation track) after watching a video.
 
 
 ## 🛠️ Evaluation Pipeline
@@ -181,7 +173,6 @@ If you prefer an interleaved format, you can manually insert the image (either t
 
 
 ## 🎓 Video-MMMU Leaderboard
----
 
 We evaluate various open-source and proprietary LMMs. The table below provides a detailed comparison. To submit your model results, please send an email to videommmu2025@gmail.com.
 
