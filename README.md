@@ -19,7 +19,9 @@
 
 
 ## 🧠 Overview  
-<img src="./assets/figure_1.png" alt="Figure1" width="65%">  
+<div align="center">
+    <img src="./assets/figure_1.png" alt="Figure 1" width="75%">
+</div>
 
 Video-MMMU is the first benchmark to assess knowledge acquisition from educational videos, evaluating how well LMMs learn new knowledge from videos and apply what they learn in practice.
 
@@ -37,9 +39,10 @@ This results in 900 question-answer pairs (300 videos × 3 QA pairs per video), 
 
 
 ## 🔍 A New Perspective on VideoQA 
-
-<img src="./assets/wrongtoright.png" alt="wrongtoright" width="65%">
-*Figure 2: The model improves its ability to solve previously incorrect problems by watching the video. The ability to solve problems is not the only evaluation criterion; acquiring knowledge and correcting previously incorrect answers is also an important capability.*
+<div align="center">
+    <img src="./assets/wrongtoright.png" alt="wrongtoright" width="75%">
+    <p><em>The model improves its ability to solve previously incorrect problems by watching the video. The ability to solve problems is not the only evaluation criterion; gaining knowledge and correcting previously incorrect answers is also an important capability.</em></p>
+</div>
 
 
 ### Videos as a Knowledge Source 
@@ -49,12 +52,14 @@ Traditional VideoQA benchmarks focus primarily on scene-based understanding, eva
 A key novelty of Video-MMMU is that it evaluates not just a model’s absolute accuracy but also its **delta accuracy**—the improvement in performance after learning from a video. A model may initially fail to solve an exam question, but we give the model a video where a human could learn to solve the question by watching the video. Video-MMMU tests how well LMMs improve their performance after watching the videos. Video-MMMU introduces Δknowledge to quantify knowledge gain by evaluating a model’s improvement on practice exam questions (Adaptation track) after watching a video. 
 
 ### Why Is This Important?  
-Intelligence is not just about solving tasks, but also about **how efficiently a model can acquire and apply new knowledge**. Video-MMMU is the first benchmarks designed to assess this capability, marking a significant step toward more advanced multimodal evaluation. 
+Intelligence is not just about solving tasks, but also about **how efficiently a model can acquire and apply new knowledge**. Video-MMMU is the first benchmark to assess this capability, marking a significant step toward more advanced multimodal evaluation. 
 
 
 
 ## ❓QA Design
-<img src="./assets/figure_2.png" alt="Figure1" width="65%">
+<div align="center">
+    <img src="./assets/figure_2.png" alt="Figure 2" width="75%">
+</div>
 
 **Perception**  
 - ASR (Automatic Speech Recognition): The **Art** category (top left).  
