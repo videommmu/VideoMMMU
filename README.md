@@ -17,6 +17,7 @@
 - [2025-1] 🎉🎉 We introduce [VideoMMMU](https://videommmu.github.io/), a massive, multi-modal, multi-disciplinary video benchmark that evaluates the knowledge acquisition capability from educational videos.
 
 ## 🧠 Overview
+![Figure1](assets/figure1.png)
 Video-MMMU evaluates the **knowledge acquisition capability** from educational videos through three main features:
 
 **1) Knowledge-intensive Video Collection:**
